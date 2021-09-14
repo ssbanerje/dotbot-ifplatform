@@ -1,9 +1,22 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import distro
+import os
+import sys
 import dotbot
 from dotbot.dispatcher import Dispatcher
+
+
+def _inject_distro():
+    # Find distro in submodule
+    root_dir = os.path.dirname(os.path.realpath(__file__))
+    path = os.path.join(root_dir, 'lib/distro')
+    # Update path
+    sys.path.insert(0, path)
+
+
+_inject_distro()
+import distro
 
 
 class IfPlatform(dotbot.Plugin):

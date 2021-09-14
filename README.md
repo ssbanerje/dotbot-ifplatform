@@ -6,12 +6,10 @@ Conditional execution of dotbot directives based on the local platform.
 ## Prerequisites
 This plugin requires [`dotbot`](https://github.com/anishathalye/dotbot) to be installed.
 
-Also, at runtime this plugin requires the `distro` package to be installed. To install distro run:
-`pip install -U distro`
-
 ## Installation
 1. Run `git submodule add https://github.com/ssbanerje/dotbot-ifplatform.git`
-2. Pass in the CLI argument `--plugin-dir dotbot-ifplatform` when executing the `dotbot` executable.
+2. Run `git submodule update --init --recursive`
+3. Pass in the CLI argument `--plugin-dir dotbot-ifplatform` when executing the `dotbot` executable.
 
 
 ## Usage
