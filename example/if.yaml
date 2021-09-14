@@ -1,0 +1,11 @@
+- ifubuntu:
+    - shell:
+        - touch ~/ubuntu
+
+- ifmacos:
+    - shell:
+        - touch ~/macos
+
+- ifanylinux:
+    - shell:
+        - touch ~/anylinux

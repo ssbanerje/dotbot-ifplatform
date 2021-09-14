@@ -1,0 +1,42 @@
+---
+
+name: CI
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    name: Run Example
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+          path: ./dotbot-ifplatform
+      - name: Checkout dotbot
+        uses: actions/checkout@v2
+        with:
+          repository: 'anishathalye/dotbot'
+          submodules: recursive
+          path: ./dotbot
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.x
+      - name: Run dotbot
+        run: './dotbot/bin/dotbot -d ./dotbot-ifplatform/example --plugin-dir ./dotbot-ifplatform -c ./dotbot-ifplatform/example/if.yaml'
+      - name: Check results
+        if: matrix.os == 'macos-latest'
+        run: '[[ $(uname -s) == "Darwin" ]] && [[ ! -f ~/ubuntu ]] && [[ -f ~/macos ]] && [[ ! -f ~/anylinux ]]'
+        shell: bash
+      - name: Check results
+        if: matrix.os == 'ubuntu-latest'
+        run: '[[ $(uname -s) == "Linux" ]] && [[ -f ~/ubuntu ]] && [[ ! -f ~/macos ]] && [[ -f ~/anylinux ]]'
+        shell: bash
+
+...
