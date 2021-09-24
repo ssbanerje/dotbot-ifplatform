@@ -74,7 +74,7 @@ class IfPlatform(dotbot.Plugin):
         if (directive == 'ifanylinux' and did in self._linux) or \
                 (directive == 'ifanybsd' and did in self._bsd) or \
                 (directive == 'if'+did):
-            self._log.debug('Matched paltform %s' % did)
+            self._log.debug('Matched platform %s' % did)
             return self._run_internal(data)
         else:
             return True
