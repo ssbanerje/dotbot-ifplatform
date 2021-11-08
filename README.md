@@ -51,6 +51,7 @@ The plugin queries the local platform string using the `distro` plugin. Acceptab
 | amazon       | Amazon Linux                               |
 | arch         | Arch Linux                                 |
 | cloudlinux   | CloudLinux OS                              |
+| elementary   | Elementary OS                              |
 | exherbo      | Exherbo Linux                              |
 | gentoo       | GenToo Linux                               |
 | ibm_powerkvm | IBM PowerKVM                               |
