@@ -38,6 +38,7 @@ class IfPlatform(dotbot.Plugin):
         'arch',         # Arch Linux
         'cloudlinux',   # CloudLinux OS
         'exherbo',      # Exherbo Linux
+        'elementary',   # Elementary OS
         'gentoo',       # GenToo Linux
         'ibm_powerkvm', # IBM PowerKVM
         'kvmibm',       # KVM for IBM z Systems
