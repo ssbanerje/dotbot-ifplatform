@@ -13,7 +13,7 @@ from dotbot.plugins import Clean, Create, Link, Shell
 def _inject_distro():
     # Find distro in submodule
     root_dir = os.path.dirname(os.path.realpath(__file__))
-    path = os.path.join(root_dir, 'lib/distro')
+    path = os.path.join(root_dir, 'lib/distro/src/distro')
     # Update path
     sys.path.insert(0, path)
 
