@@ -73,9 +73,13 @@ class IfPlatform(dotbot.Plugin):
                 plugin_paths.append(path)
         for path in plugin_paths:
             abspath = os.path.abspath(path)
-            plugins.extend(module.load(abspath))
+            for plugin in module.load(abspath):
+                if plugin not in plugins:
+                    plugins.append(plugin)
         if not self._context.options().disable_built_in_plugins:
-            plugins.extend([Clean, Create, Link, Shell])
+            for builtin in [Clean, Create, Link, Shell]:
+                if builtin not in plugins:
+                    plugins.append(builtin)
         return plugins
 
     def can_handle(self, directive):
