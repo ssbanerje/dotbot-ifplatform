@@ -66,7 +66,7 @@ class IfPlatform(dotbot.Plugin):
         self._linux = [d for d in self._distros if (d not in self._bsd) and (d != 'macos')]
 
     def _load_plugins(self):
-        plugin_paths = self._context.options().plugins
+        plugin_paths = list(self._context.options().plugins)
         plugins = []
         for dir in self._context.options().plugin_dirs:
             for path in glob.glob(os.path.join(dir, '*.py')):
