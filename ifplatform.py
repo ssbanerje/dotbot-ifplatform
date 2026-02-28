@@ -93,9 +93,12 @@ class IfPlatform(dotbot.Plugin):
         if did == 'darwin':
             did = 'macos'
 
-        if (directive == 'ifanylinux' and did in self._linux) or \
-                (directive == 'ifanybsd' and did in self._bsd) or \
-                (directive == 'if'+did):
+        # Include ID_LIKE entries so derivatives (e.g. CachyOS -> arch) match
+        all_ids = [did] + distro.like().split()
+
+        if (directive == 'ifanylinux' and any(d in self._linux for d in all_ids)) or \
+                (directive == 'ifanybsd' and any(d in self._bsd for d in all_ids)) or \
+                any(directive == 'if'+d for d in all_ids):
             self._log.debug('Matched platform %s' % did)
             return self._run_internal(data)
         else:
