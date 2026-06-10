@@ -27,6 +27,7 @@ class IfPlatform(dotbot.Plugin):
         'anylinux',     # All linux
         'anybsd',       # All BSD
         'macos',        # MacOS
+        'windows',      # Windows
         'ubuntu',       # Ubuntu
         'debian',       # Debian
         'rhel',         # RedHat Enterprise Linux
@@ -63,7 +64,7 @@ class IfPlatform(dotbot.Plugin):
         super(IfPlatform, self).__init__(context)
         self._directives = ['if'+d for d in self._distros]
         self._bsd = [d for d in self._distros if d.endswith('bsd')]
-        self._linux = [d for d in self._distros if (d not in self._bsd) and (d != 'macos')]
+        self._linux = [d for d in self._distros if (d not in self._bsd) and (d not in {'macos', 'windows'})]
 
     def _load_plugins(self):
         plugin_paths = self._context.options().plugins
@@ -88,6 +89,8 @@ class IfPlatform(dotbot.Plugin):
         did = distro.id()
         if did == 'darwin':
             did = 'macos'
+        if os.name == 'nt':
+            did = 'windows'
 
         if (directive == 'ifanylinux' and did in self._linux) or \
                 (directive == 'ifanybsd' and did in self._bsd) or \
