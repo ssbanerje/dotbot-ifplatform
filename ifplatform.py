@@ -67,16 +67,20 @@ class IfPlatform(dotbot.Plugin):
         self._linux = [d for d in self._distros if (d not in self._bsd) and (d not in {'macos', 'windows'})]
 
     def _load_plugins(self):
-        plugin_paths = self._context.options().plugins
+        plugin_paths = list(self._context.options().plugins)
         plugins = []
         for dir in self._context.options().plugin_dirs:
             for path in glob.glob(os.path.join(dir, '*.py')):
                 plugin_paths.append(path)
         for path in plugin_paths:
             abspath = os.path.abspath(path)
-            plugins.extend(module.load(abspath))
+            for plugin in module.load(abspath):
+                if plugin not in plugins:
+                    plugins.append(plugin)
         if not self._context.options().disable_built_in_plugins:
-            plugins.extend([Clean, Create, Link, Shell])
+            for builtin in [Clean, Create, Link, Shell]:
+                if builtin not in plugins:
+                    plugins.append(builtin)
         return plugins
 
     def can_handle(self, directive):
@@ -92,9 +96,12 @@ class IfPlatform(dotbot.Plugin):
         if os.name == 'nt':
             did = 'windows'
 
-        if (directive == 'ifanylinux' and did in self._linux) or \
-                (directive == 'ifanybsd' and did in self._bsd) or \
-                (directive == 'if'+did):
+        # Include ID_LIKE entries so derivatives (e.g. CachyOS -> arch) match
+        all_ids = [did] + distro.like().split()
+
+        if (directive == 'ifanylinux' and any(d in self._linux for d in all_ids)) or \
+                (directive == 'ifanybsd' and any(d in self._bsd for d in all_ids)) or \
+                any(directive == 'if'+d for d in all_ids):
             self._log.debug('Matched platform %s' % did)
             return self._run_internal(data)
         else:
