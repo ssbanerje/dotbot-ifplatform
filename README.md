@@ -1,21 +1,36 @@
 # dotbot-ifplatform
 
-Conditional execution of dotbot directives based on the local platform.
-
+Conditional execution of [`dotbot`](https://github.com/anishathalye/dotbot) directives based on the local operating system or Linux/BSD distribution.
 
 ## Prerequisites
+
 This plugin requires [`dotbot`](https://github.com/anishathalye/dotbot) to be installed.
 
 ## Installation
-1. Run `git submodule add https://github.com/ssbanerje/dotbot-ifplatform.git`
-2. Run `git submodule update --init --recursive`
-3. Pass in the CLI argument `--plugin-dir dotbot-ifplatform` when executing the `dotbot` executable.
 
+1. Add the plugin as a submodule to your dotfiles repository:
+   ```sh
+   git submodule add https://github.com/ssbanerje/dotbot-ifplatform.git
+   ```
+2. (Recommended) Initialize the embedded [`distro`](https://github.com/python-distro/distro) submodule:
+   ```sh
+   git submodule update --init --recursive
+   ```
+   > If the `lib/distro` submodule is not initialized, `dotbot-ifplatform` automatically falls back to Python's standard library (`sys.platform`, `platform.system()`, and `platform.freedesktop_os_release()` / `/etc/os-release`).
+3. Load the plugin either in your Dotbot YAML config (**Dotbot v1.21+**, recommended):
+   ```yaml
+   - plugins:
+       - dotbot-ifplatform/ifplatform.py
+   ```
+   or via the CLI when invoking `dotbot`:
+   ```sh
+   dotbot -p dotbot-ifplatform/ifplatform.py -c install.conf.yaml
+   ```
+   *(Legacy `--plugin-dir dotbot-ifplatform` is also supported.)*
 
 ## Usage
 
-Add the `if<platform>` directive to the `dotbot` YAML file to conditionally execute the directives.
-For example:
+Add `if<platform>` or `ifnot<platform>` blocks to your Dotbot YAML configuration to conditionally execute nested directives. Top-level `- defaults:`, `--dry-run`, `--exit-on-failure`, and YAML-loaded `- plugins:` are automatically inherited inside matching blocks.
 
 ```yaml
 - ifubuntu:
@@ -29,51 +44,98 @@ For example:
 - ifmacos:
     - brew:
         - ranger
+
+- ifwindows:
+    - shell:
+        - winget install Git.Git
+
+- ifnotwindows:
+    - link:
+        ~/.bashrc: shell/bashrc
+
+- ifanylinux:
+    - ifnotwsl:
+        - link:
+            ~/.config/i3/config: i3/config
 ```
 
-### Details
+### Derivative Distributions (`ID_LIKE`) & WSL
 
-The plugin queries the local platform string using the `distro` plugin. Acceptable values of
-`<platform>` in the `if<platform>` directive is shown below:
+- **`ID_LIKE` matching:** Derivative distributions match both their own ID and any parent distribution listed in `ID_LIKE`. For example, CachyOS matches `ifcachyos`, `ifarch`, and `ifanylinux`; Linux Mint and Pop!_OS match their own directives as well as `ifubuntu`, `ifdebian`, and `ifanylinux`.
+- **Additive WSL matching:** When running inside Windows Subsystem for Linux (e.g., Ubuntu on WSL2), `ifwsl`, `ifubuntu`, and `ifanylinux` all match, while `ifnotwsl` allows skipping Linux desktop-only steps.
 
-| `<platform>` | Description                                |
-|--------------|--------------------------------------------|
-| anylinux     | Any Linux in table                         |
-| anybsd       | Any BSD in table                           |
-| macos        | MacOS                                      |
-| windows      | Windows                                    |
-| alpine       | Alpine Linux                               |
-| ubuntu       | Ubuntu                                     |
-| debian       | Debian                                     |
-| rhel         | RedHat Enterprise Linux                    |
-| centos       | CentOS                                     |
-| fedora       | Fedora                                     |
-| sles         | SUSE Linux Enterprise Server               |
-| opensuse     | openSUSE                                   |
-| amazon       | Amazon Linux                               |
-| arch         | Arch Linux                                 |
-| cloudlinux   | CloudLinux OS                              |
-| elementary   | Elementary OS                              |
-| exherbo      | Exherbo Linux                              |
-| gentoo       | GenToo Linux                               |
-| ibm_powerkvm | IBM PowerKVM                               |
-| kvmibm       | KVM for IBM z Systems                      |
-| linuxmint    | Linux Mint                                 |
-| mageia       | Mageia                                     |
-| mandriva     | Mandriva Linux                             |
-| parallels    | Parallels                                  |
-| pidora       | Pidora                                     |
-| raspbian     | Raspbian                                   |
-| oracle       | Oracle Linux (and Oracle Enterprise Linux) |
-| rocky        | Rocky Linux                                |
-| scientific   | Scientific Linux                           |
-| slackware    | Slackware                                  |
-| xenserver    | XenServer                                  |
-| openbsd      | OpenBSD                                    |
-| netbsd       | NetBSD                                     |
-| freebsd      | FreeBSD                                    |
-| midnightbsd  | MidnightBSD                                |
-| void         | Void Linux                                 |
+### Supported `<platform>` Values
 
-This list was generated using `distro` v1.6.0. There might be some differences based on the version
-of `distro` installed locally.
+Every entry below supports both `if<platform>` and `ifnot<platform>`.
+
+#### Meta & OS Targets
+
+| `<platform>` | Description                                              |
+|--------------|----------------------------------------------------------|
+| `any`        | Any platform                                             |
+| `anylinux`   | Any Linux distribution                                   |
+| `anybsd`     | Any BSD distribution                                     |
+| `wsl`        | Windows Subsystem for Linux (additive on Linux)          |
+| `macos`      | macOS                                                    |
+| `windows`    | Windows                                                  |
+| `aix`        | IBM AIX                                                  |
+
+#### Linux Distributions
+
+| `<platform>`  | Description                                             |
+|---------------|---------------------------------------------------------|
+| `almalinux`   | AlmaLinux                                               |
+| `alpine`      | Alpine Linux                                            |
+| `altlinux`    | ALT Linux                                               |
+| `amzn`        | Amazon Linux (`amazon` is also accepted as an alias)    |
+| `amazon`      | Amazon Linux (legacy alias for `amzn`)                  |
+| `arch`        | Arch Linux                                              |
+| `bazzite`     | Bazzite                                                 |
+| `buildroot`   | Buildroot                                               |
+| `cachyos`     | CachyOS                                                 |
+| `centos`      | CentOS                                                  |
+| `cloudlinux`  | CloudLinux OS                                           |
+| `debian`      | Debian                                                  |
+| `elementary`  | Elementary OS                                           |
+| `endeavouros` | EndeavourOS                                             |
+| `exherbo`     | Exherbo Linux                                           |
+| `fedora`      | Fedora                                                  |
+| `garuda`      | Garuda Linux                                            |
+| `gentoo`      | Gentoo Linux                                            |
+| `guix`        | Guix System                                             |
+| `ibm_powerkvm`| IBM PowerKVM                                            |
+| `kali`        | Kali Linux                                              |
+| `kvmibm`      | KVM for IBM z Systems                                   |
+| `linuxmint`   | Linux Mint                                              |
+| `mageia`      | Mageia                                                  |
+| `mandriva`    | Mandriva Linux                                          |
+| `manjaro`     | Manjaro Linux                                           |
+| `nixos`       | NixOS                                                   |
+| `nobara`      | Nobara Linux                                            |
+| `opensuse`    | openSUSE                                                |
+| `oracle`      | Oracle Linux (and Oracle Enterprise Linux)              |
+| `parallels`   | Parallels                                               |
+| `pidora`      | Pidora                                                  |
+| `pop`         | Pop!_OS                                                 |
+| `raspbian`    | Raspbian                                                |
+| `rhel`        | Red Hat Enterprise Linux                                |
+| `rocky`       | Rocky Linux                                             |
+| `scientific`  | Scientific Linux                                        |
+| `slackware`   | Slackware                                               |
+| `sles`        | SUSE Linux Enterprise Server                            |
+| `solus`       | Solus                                                   |
+| `steamos`     | SteamOS                                                 |
+| `ubuntu`      | Ubuntu                                                  |
+| `void`        | Void Linux                                              |
+| `xenserver`   | XenServer                                               |
+| `zorin`       | Zorin OS                                                |
+
+#### BSD Distributions
+
+| `<platform>`  | Description                                             |
+|---------------|---------------------------------------------------------|
+| `dragonfly`   | DragonFly BSD                                           |
+| `freebsd`     | FreeBSD                                                 |
+| `midnightbsd` | MidnightBSD                                             |
+| `netbsd`      | NetBSD                                                  |
+| `openbsd`     | OpenBSD                                                 |

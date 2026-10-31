@@ -458,5 +458,22 @@ class TestDispatcherIntegration(unittest.TestCase):
         self.assertEqual(calls[0][0], '/tmp/dotfiles')
 
 
+class TestDocumentationSync(unittest.TestCase):
+    """README.md documents every supported platform target."""
+
+    def test_readme_documents_all_targets(self):
+        readme_path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'README.md'
+        )
+        with open(readme_path, 'r', encoding='utf-8') as f:
+            readme = f.read()
+        for target in IfPlatform._distros:
+            self.assertIn(
+                f'| `{target}`',
+                readme,
+                f"Target '{target}' is missing from the README.md table",
+            )
+
+
 if __name__ == '__main__':
     unittest.main()
