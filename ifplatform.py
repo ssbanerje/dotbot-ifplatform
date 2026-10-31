@@ -68,6 +68,13 @@ class IfPlatform(dotbot.Plugin):
         }
         self._plugins = None
 
+    def _get_plugins(self):
+        if hasattr(self._context, 'plugins'):
+            ctx_plugins = self._context.plugins()
+            if ctx_plugins is not None:
+                return ctx_plugins
+        return self._load_plugins()
+
     def _load_plugins(self):
         if self._plugins is not None:
             return self._plugins
@@ -123,6 +130,6 @@ class IfPlatform(dotbot.Plugin):
             only=self._context.options().only,
             skip=self._context.options().skip,
             options=self._context.options(),
-            plugins=self._load_plugins(),
+            plugins=self._get_plugins(),
         )
         return dispatcher.dispatch(data)
