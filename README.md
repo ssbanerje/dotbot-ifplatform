@@ -42,6 +42,7 @@ The plugin queries the local platform string using the `distro` plugin. Acceptab
 | anybsd       | Any BSD in table                           |
 | macos        | MacOS                                      |
 | windows      | Windows                                    |
+| alpine       | Alpine Linux                               |
 | ubuntu       | Ubuntu                                     |
 | debian       | Debian                                     |
 | rhel         | RedHat Enterprise Linux                    |
@@ -64,6 +65,7 @@ The plugin queries the local platform string using the `distro` plugin. Acceptab
 | pidora       | Pidora                                     |
 | raspbian     | Raspbian                                   |
 | oracle       | Oracle Linux (and Oracle Enterprise Linux) |
+| rocky        | Rocky Linux                                |
 | scientific   | Scientific Linux                           |
 | slackware    | Slackware                                  |
 | xenserver    | XenServer                                  |
@@ -71,6 +73,7 @@ The plugin queries the local platform string using the `distro` plugin. Acceptab
 | netbsd       | NetBSD                                     |
 | freebsd      | FreeBSD                                    |
 | midnightbsd  | MidnightBSD                                |
+| void         | Void Linux                                 |
 
 This list was generated using `distro` v1.6.0. There might be some differences based on the version
 of `distro` installed locally.
