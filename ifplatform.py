@@ -60,6 +60,7 @@ class IfPlatform(dotbot.Plugin):
         'alpine',        # Alpine Linux
         'rocky',         # Rocky Linux
         'void',          # Void Linux
+        'pop',           # Pop!_OS
     ]
 
     def __init__(self, context):
