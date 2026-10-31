@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import glob
+import inspect
 import os
 import platform
 import sys
@@ -87,6 +88,8 @@ def _is_wsl(is_linux):
 
 
 class IfPlatform(dotbot.Plugin):
+    supports_dry_run = True
+
     _meta_targets = (
         'any',           # Any platform
         'anylinux',      # All Linux distributions
@@ -249,11 +252,26 @@ class IfPlatform(dotbot.Plugin):
         return True
 
     def _run_internal(self, data):
-        dispatcher = Dispatcher(
-            self._context.base_directory(),
-            only=self._context.options().only,
-            skip=self._context.options().skip,
-            options=self._context.options(),
-            plugins=self._get_plugins(),
+        options = self._context.options()
+        kwargs = {
+            'only': options.only,
+            'skip': options.skip,
+            'options': options,
+        }
+        try:
+            params = inspect.signature(Dispatcher.__init__).parameters
+        except (TypeError, ValueError):
+            params = {}
+        accepts_var_kw = any(
+            p.kind == inspect.Parameter.VAR_KEYWORD for p in params.values()
         )
+        if accepts_var_kw or 'plugins' in params:
+            kwargs['plugins'] = self._get_plugins()
+        if accepts_var_kw or 'exit_on_failure' in params:
+            kwargs['exit_on_failure'] = getattr(options, 'exit_on_failure', False)
+
+        dispatcher = Dispatcher(self._context.base_directory(), **kwargs)
+        defaults = self._context.defaults()
+        if defaults and hasattr(dispatcher, '_context'):
+            dispatcher._context.set_defaults(defaults)
         return dispatcher.dispatch(data)
