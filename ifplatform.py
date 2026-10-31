@@ -3,6 +3,7 @@
 
 import glob
 import os
+import platform
 import sys
 
 import dotbot
@@ -19,11 +20,15 @@ def _inject_distro():
 
 
 _inject_distro()
-import distro  # noqa: E402
+try:
+    import distro  # noqa: E402
+except ImportError:
+    distro = None
 
 
 class IfPlatform(dotbot.Plugin):
     _distros = [
+        'any',           # Any platform
         'anylinux',      # All linux
         'anybsd',        # All BSD
         'macos',         # MacOS
@@ -66,9 +71,11 @@ class IfPlatform(dotbot.Plugin):
     def __init__(self, context):
         super(IfPlatform, self).__init__(context)
         self._directives = {'if' + d for d in self._distros}
-        self._bsd = {d for d in self._distros if d.endswith('bsd')}
+        self._bsd = {d for d in self._distros if d.endswith('bsd') and d != 'anybsd'}
         self._linux = {
-            d for d in self._distros if (d not in self._bsd) and (d not in {'macos', 'windows'})
+            d
+            for d in self._distros
+            if (d not in self._bsd) and (d not in {'any', 'anylinux', 'anybsd', 'macos', 'windows'})
         }
         self._plugins = None
 
@@ -108,19 +115,21 @@ class IfPlatform(dotbot.Plugin):
         if directive not in self._directives:
             raise ValueError('Cannot handle this directive %s' % directive)
 
-        did = distro.id()
+        did = distro.id() if distro is not None else platform.system().lower()
         if did == 'darwin' or sys.platform == 'darwin':
             did = 'macos'
         elif os.name == 'nt' or sys.platform == 'win32':
             did = 'windows'
 
         # Include ID_LIKE entries so derivatives (e.g. CachyOS -> arch) match
-        all_ids = [did] + distro.like().split()
+        like_ids = distro.like().split() if distro is not None else []
+        all_ids = [did] + like_ids
         is_linux = sys.platform.startswith('linux') or any(d in self._linux for d in all_ids)
         is_bsd = any(d in self._bsd for d in all_ids)
 
         if (
-            (directive == 'ifanylinux' and is_linux)
+            directive == 'ifany'
+            or (directive == 'ifanylinux' and is_linux)
             or (directive == 'ifanybsd' and is_bsd)
             or any(directive == 'if' + d for d in all_ids)
         ):
