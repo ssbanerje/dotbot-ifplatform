@@ -58,7 +58,9 @@ def _mock_distro(did, like=''):
     fake = MagicMock()
     fake.id.return_value = did
     fake.like.return_value = like
-    with patch.object(ifplatform, 'distro', fake):
+    with patch.object(ifplatform, 'distro', fake), patch(
+        'ifplatform.sys.platform', 'linux'
+    ), patch('ifplatform.os.name', 'posix'):
         yield fake
 
 
@@ -110,16 +112,31 @@ class TestDirectMatch(unittest.TestCase):
                 run.assert_not_called()
 
     def test_windows_maps_to_ifwindows(self):
-        with _mock_distro(''), patch('ifplatform.os.name', 'nt'), patch(
-            'ifplatform.sys.platform', 'win32'
-        ):
+        fake = MagicMock()
+        fake.id.return_value = 'msys_nt-10.0-26100'
+        fake.like.return_value = ''
+        with patch.object(ifplatform, 'distro', fake), patch(
+            'ifplatform.os.name', 'nt'
+        ), patch('ifplatform.sys.platform', 'win32'):
             plugin = _make_plugin()
             with patch.object(plugin, '_run_internal', return_value=True) as run:
                 plugin.handle('ifwindows', [])
                 run.assert_called_once()
+            fake.id.assert_not_called()
             with patch.object(plugin, '_run_internal', return_value=True) as run:
                 plugin.handle('ifanylinux', [])
                 run.assert_not_called()
+
+    def test_msys_distro_id_maps_to_ifwindows(self):
+        for did in ('msys_nt-10.0-26100', 'mingw64_nt-10.0', 'cygwin_nt-10.0'):
+            with self.subTest(did=did), _mock_distro(did):
+                plugin = _make_plugin()
+                with patch.object(plugin, '_run_internal', return_value=True) as run:
+                    plugin.handle('ifwindows', [])
+                    run.assert_called_once()
+                with patch.object(plugin, '_run_internal', return_value=True) as run:
+                    plugin.handle('ifanylinux', [])
+                    run.assert_not_called()
 
     def test_aix_does_not_match_anylinux_or_anybsd(self):
         with _mock_distro('aix'):

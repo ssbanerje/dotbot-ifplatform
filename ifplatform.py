@@ -205,17 +205,19 @@ class IfPlatform(dotbot.Plugin):
         if directive not in self._directives:
             raise ValueError('Cannot handle this directive %s' % directive)
 
-        if distro is not None:
+        if sys.platform == 'darwin':
+            did, like_ids = 'macos', []
+        elif os.name == 'nt' or sys.platform in ('win32', 'cygwin', 'msys'):
+            did, like_ids = 'windows', []
+        elif distro is not None:
             did = distro.id()
             like_ids = distro.like().split()
         else:
             did, like_ids = _stdlib_distro_info()
 
-        if did == 'darwin' or (not did and sys.platform == 'darwin'):
+        if did == 'darwin':
             did = 'macos'
-        elif did in ('windows', 'win32', 'nt') or (
-            not did and (os.name == 'nt' or sys.platform in ('win32', 'cygwin', 'msys'))
-        ):
+        elif did in ('windows', 'win32', 'nt') or did.startswith(('msys', 'mingw', 'cygwin')):
             did = 'windows'
 
         # Include ID_LIKE entries so derivatives (e.g. CachyOS -> arch) match
