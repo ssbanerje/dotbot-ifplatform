@@ -324,7 +324,7 @@ class TestStdlibFallback(unittest.TestCase):
         fake_info = {'ID': 'pop', 'ID_LIKE': 'ubuntu debian'}
         with patch.object(ifplatform, 'distro', None), patch(
             'ifplatform.sys.platform', 'linux'
-        ), patch(
+        ), patch('ifplatform.os.name', 'posix'), patch(
             'ifplatform.platform.freedesktop_os_release', return_value=fake_info, create=True
         ):
             plugin = _make_plugin()
@@ -337,7 +337,7 @@ class TestStdlibFallback(unittest.TestCase):
         os_release_text = 'ID="ol"\nID_LIKE="fedora"\n'
         with patch.object(ifplatform, 'distro', None), patch(
             'ifplatform.sys.platform', 'linux'
-        ), patch(
+        ), patch('ifplatform.os.name', 'posix'), patch(
             'ifplatform.platform.freedesktop_os_release', side_effect=OSError, create=True
         ), patch(
             'builtins.open', side_effect=lambda *a, **kw: io.StringIO(os_release_text)
@@ -352,7 +352,7 @@ class TestStdlibFallback(unittest.TestCase):
         fake_info = {'ID': 'opensuse-leap', 'ID_LIKE': 'suse opensuse'}
         with patch.object(ifplatform, 'distro', None), patch(
             'ifplatform.sys.platform', 'linux'
-        ), patch(
+        ), patch('ifplatform.os.name', 'posix'), patch(
             'ifplatform.platform.freedesktop_os_release', return_value=fake_info, create=True
         ):
             plugin = _make_plugin()
