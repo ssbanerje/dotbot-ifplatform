@@ -75,12 +75,24 @@ def _stdlib_distro_info():
 
 
 class IfPlatform(dotbot.Plugin):
-    _distros = [
+    _meta_targets = (
         'any',           # Any platform
-        'anylinux',      # All linux
-        'anybsd',        # All BSD
-        'macos',         # MacOS
+        'anylinux',      # All Linux distributions
+        'anybsd',        # All BSD distributions
+    )
+    _os_targets = (
+        'macos',         # macOS
         'windows',       # Windows
+        'aix',           # AIX
+    )
+    _bsd_distros = (
+        'openbsd',       # OpenBSD
+        'netbsd',        # NetBSD
+        'freebsd',       # FreeBSD
+        'midnightbsd',   # MidnightBSD
+        'dragonfly',     # DragonFly BSD
+    )
+    _linux_distros = (
         'ubuntu',        # Ubuntu
         'debian',        # Debian
         'rhel',          # RedHat Enterprise Linux
@@ -88,12 +100,16 @@ class IfPlatform(dotbot.Plugin):
         'fedora',        # Fedora
         'sles',          # SUSE Linux Enterprise Server
         'opensuse',      # openSUSE
-        'amazon',        # Amazon Linux
+        'amzn',          # Amazon Linux (distro.id() / os-release ID)
+        'amazon',        # Amazon Linux (legacy alias)
         'arch',          # Arch Linux
+        'buildroot',     # Buildroot
         'cloudlinux',    # CloudLinux OS
         'exherbo',       # Exherbo Linux
         'elementary',    # Elementary OS
         'gentoo',        # GenToo Linux
+        'guix',          # Guix System
+        'altlinux',      # ALT Linux
         'ibm_powerkvm',  # IBM PowerKVM
         'kvmibm',        # KVM for IBM z Systems
         'linuxmint',     # Linux Mint
@@ -106,26 +122,32 @@ class IfPlatform(dotbot.Plugin):
         'scientific',    # Scientific Linux
         'slackware',     # Slackware
         'xenserver',     # XenServer
-        'openbsd',       # OpenBSD
-        'netbsd',        # NetBSD
-        'freebsd',       # FreeBSD
-        'midnightbsd',   # MidnightBSD
         'alpine',        # Alpine Linux
         'rocky',         # Rocky Linux
+        'almalinux',     # AlmaLinux
         'void',          # Void Linux
         'pop',           # Pop!_OS
         'manjaro',       # Manjaro Linux
-    ]
+        'nixos',         # NixOS
+        'kali',          # Kali Linux
+        'cachyos',       # CachyOS
+        'endeavouros',   # EndeavourOS
+        'garuda',        # Garuda Linux
+        'nobara',        # Nobara Linux
+        'bazzite',       # Bazzite
+        'steamos',       # SteamOS
+        'zorin',         # Zorin OS
+        'solus',         # Solus
+    )
+    _distros = list(_meta_targets + _os_targets + _linux_distros + _bsd_distros)
 
     def __init__(self, context):
         super(IfPlatform, self).__init__(context)
-        self._directives = {'if' + d for d in self._distros}
-        self._bsd = {d for d in self._distros if d.endswith('bsd') and d != 'anybsd'}
-        self._linux = {
-            d
-            for d in self._distros
-            if (d not in self._bsd) and (d not in {'any', 'anylinux', 'anybsd', 'macos', 'windows'})
-        }
+        self._targets = set(self._distros)
+        self._directives = {'if' + d for d in self._targets}
+        self._bsd = set(self._bsd_distros)
+        self._linux = set(self._linux_distros)
+        self._other_os = set(self._os_targets) | self._bsd
         self._plugins = None
 
     def _get_plugins(self):
@@ -179,8 +201,13 @@ class IfPlatform(dotbot.Plugin):
 
         # Include ID_LIKE entries so derivatives (e.g. CachyOS -> arch) match
         all_ids = [did] + like_ids if did else list(like_ids)
+        if 'amzn' in all_ids and 'amazon' not in all_ids:
+            all_ids.append('amazon')
+        elif 'amazon' in all_ids and 'amzn' not in all_ids:
+            all_ids.append('amzn')
+
         is_linux = any(d in self._linux for d in all_ids) or (
-            did not in ({'macos', 'windows'} | self._bsd) and sys.platform.startswith('linux')
+            did not in self._other_os and sys.platform.startswith('linux')
         )
         is_bsd = any(d in self._bsd for d in all_ids)
 
