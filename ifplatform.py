@@ -26,6 +26,54 @@ except ImportError:
     distro = None
 
 
+_NORMALIZED_OS_ID = {
+    'ol': 'oracle',
+    'opensuse-leap': 'opensuse',
+}
+_OS_RELEASE_PATHS = ('/etc/os-release', '/usr/lib/os-release')
+
+
+def _parse_os_release_lines(lines):
+    info = {}
+    for raw_line in lines:
+        line = raw_line.strip()
+        if not line or line.startswith('#') or '=' not in line:
+            continue
+        key, value = line.split('=', 1)
+        value = value.strip()
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in ('"', "'"):
+            value = value[1:-1]
+        value = value.replace('\\"', '"').replace("\\'", "'").replace('\\\\', '\\')
+        info[key.strip()] = value
+    return info
+
+
+def _read_os_release():
+    if hasattr(platform, 'freedesktop_os_release'):
+        try:
+            return platform.freedesktop_os_release()
+        except OSError:
+            pass
+    for path in _OS_RELEASE_PATHS:
+        try:
+            with open(path, 'r', encoding='utf-8') as f:
+                return _parse_os_release_lines(f)
+        except OSError:
+            continue
+    return {}
+
+
+def _stdlib_distro_info():
+    info = _read_os_release() if sys.platform.startswith('linux') else {}
+    raw_id = info.get('ID', '').strip().lower().replace(' ', '_')
+    if raw_id:
+        did = _NORMALIZED_OS_ID.get(raw_id, raw_id)
+    else:
+        did = platform.system().lower().replace(' ', '_')
+    like_ids = [entry.lower() for entry in info.get('ID_LIKE', '').split()]
+    return did, like_ids
+
+
 class IfPlatform(dotbot.Plugin):
     _distros = [
         'any',           # Any platform
@@ -66,6 +114,7 @@ class IfPlatform(dotbot.Plugin):
         'rocky',         # Rocky Linux
         'void',          # Void Linux
         'pop',           # Pop!_OS
+        'manjaro',       # Manjaro Linux
     ]
 
     def __init__(self, context):
@@ -115,16 +164,24 @@ class IfPlatform(dotbot.Plugin):
         if directive not in self._directives:
             raise ValueError('Cannot handle this directive %s' % directive)
 
-        did = distro.id() if distro is not None else platform.system().lower()
-        if did == 'darwin' or sys.platform == 'darwin':
+        if distro is not None:
+            did = distro.id()
+            like_ids = distro.like().split()
+        else:
+            did, like_ids = _stdlib_distro_info()
+
+        if did == 'darwin' or (not did and sys.platform == 'darwin'):
             did = 'macos'
-        elif os.name == 'nt' or sys.platform == 'win32':
+        elif did in ('windows', 'win32', 'nt') or (
+            not did and (os.name == 'nt' or sys.platform in ('win32', 'cygwin', 'msys'))
+        ):
             did = 'windows'
 
         # Include ID_LIKE entries so derivatives (e.g. CachyOS -> arch) match
-        like_ids = distro.like().split() if distro is not None else []
-        all_ids = [did] + like_ids
-        is_linux = sys.platform.startswith('linux') or any(d in self._linux for d in all_ids)
+        all_ids = [did] + like_ids if did else list(like_ids)
+        is_linux = any(d in self._linux for d in all_ids) or (
+            did not in ({'macos', 'windows'} | self._bsd) and sys.platform.startswith('linux')
+        )
         is_bsd = any(d in self._bsd for d in all_ids)
 
         if (
