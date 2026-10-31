@@ -12,14 +12,14 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: ['3.9', '3.12']
+        python-version: ['3.10', '3.13']
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           submodules: recursive
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
       - name: Run unit tests
@@ -34,18 +34,18 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           submodules: recursive
           path: ./dotbot-ifplatform
       - name: Checkout dotbot
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: 'anishathalye/dotbot'
           submodules: recursive
           path: ./dotbot
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: '3.x'
       - name: Run example with lib/distro submodule (--plugin-dir)
