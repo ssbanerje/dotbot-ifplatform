@@ -1,11 +1,27 @@
 - ifubuntu:
     - shell:
-        - touch ~/ubuntu
+        - python -c "open('ubuntu', 'w').close()"
 
 - ifmacos:
     - shell:
-        - touch ~/macos
+        - python -c "open('macos', 'w').close()"
+
+- ifwindows:
+    - shell:
+        - python -c "open('windows', 'w').close()"
 
 - ifanylinux:
     - shell:
-        - touch ~/anylinux
+        - python -c "open('anylinux', 'w').close()"
+
+- ifany:
+    - shell:
+        - python -c "open('any', 'w').close()"
+
+- ifnotmacos:
+    - shell:
+        - python -c "open('notmacos', 'w').close()"
+
+- ifnotwindows:
+    - shell:
+        - python -c "open('notwindows', 'w').close()"

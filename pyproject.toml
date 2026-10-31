@@ -1,0 +1,9 @@
+[tool.pyright]
+extraPaths = ["./lib/distro/src", "../dotbot/src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py38"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
