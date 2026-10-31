@@ -1,42 +1,84 @@
 ---
-
 name: CI
 on:
   push:
   pull_request:
 
 jobs:
-  build:
+  unit-tests:
+    name: Unit Tests (${{ matrix.os }}, Python ${{ matrix.python-version }})
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
-    name: Run Example
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ['3.9', '3.12']
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Run unit tests
+        run: python -m unittest discover -s tests -v
+
+  integration:
+    name: Integration (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
         with:
           submodules: recursive
           path: ./dotbot-ifplatform
       - name: Checkout dotbot
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           repository: 'anishathalye/dotbot'
           submodules: recursive
           path: ./dotbot
       - name: Setup Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
-          python-version: 3.x
-      - name: Run dotbot
-        run: './dotbot/bin/dotbot -d ./dotbot-ifplatform/example --plugin-dir ./dotbot-ifplatform -c ./dotbot-ifplatform/example/if.yaml'
-      - name: Check results
-        if: matrix.os == 'macos-latest'
-        run: '[[ $(uname -s) == "Darwin" ]] && [[ ! -f ~/ubuntu ]] && [[ -f ~/macos ]] && [[ ! -f ~/anylinux ]]'
+          python-version: '3.x'
+      - name: Run example with lib/distro submodule (--plugin-dir)
+        run: |
+          python -c "import os; os.makedirs('out_submod', exist_ok=True)"
+          python ./dotbot/bin/dotbot -d ./out_submod --plugin-dir ./dotbot-ifplatform -c ./dotbot-ifplatform/example/if.yaml
+      - name: Run example via YAML plugins directive
+        run: |
+          python -c "import os, pathlib; os.makedirs('out_yaml', exist_ok=True); plugin = pathlib.Path('dotbot-ifplatform/ifplatform.py').resolve().as_posix(); base = pathlib.Path('dotbot-ifplatform/example/if.yaml').read_text(); pathlib.Path('yaml_plugins.yaml').write_text(f'- plugins:\n    - {plugin}\n\n' + base)"
+          python ./dotbot/bin/dotbot -d ./out_yaml -c ./yaml_plugins.yaml
+      - name: Run example without submodule (stdlib fallback)
+        run: |
+          python -c "import os, shutil; os.makedirs('standalone', exist_ok=True); os.makedirs('out_stdlib', exist_ok=True); shutil.copy('dotbot-ifplatform/ifplatform.py', 'standalone/ifplatform.py')"
+          python ./dotbot/bin/dotbot -d ./out_stdlib -p ./standalone/ifplatform.py -c ./dotbot-ifplatform/example/if.yaml
+      - name: Verify results across all three modes
+        env:
+          RUNNER_MATRIX_OS: ${{ matrix.os }}
+        run: |
+          python - << 'EOF'
+          import os
+          os_name = os.environ['RUNNER_MATRIX_OS']
+          expected_map = {
+              'ubuntu-latest': {'ubuntu', 'anylinux', 'any', 'notmacos', 'notwindows'},
+              'macos-latest': {'macos', 'any', 'notwindows'},
+              'windows-latest': {'windows', 'any', 'notmacos'},
+          }
+          expected = expected_map[os_name]
+          all_markers = {'ubuntu', 'macos', 'windows', 'anylinux', 'any', 'notmacos', 'notwindows'}
+          for out_dir in ('out_submod', 'out_yaml', 'out_stdlib'):
+              actual = set(os.listdir(out_dir))
+              assert actual == expected, f'{out_dir} on {os_name}: expected {expected}, got {actual}'
+              assert not (actual & (all_markers - expected))
+          print(f'Verified {os_name}: {sorted(expected)}')
+          EOF
         shell: bash
-      - name: Check results
-        if: matrix.os == 'ubuntu-latest'
-        run: '[[ $(uname -s) == "Linux" ]] && [[ -f ~/ubuntu ]] && [[ ! -f ~/macos ]] && [[ -f ~/anylinux ]]'
-        shell: bash
-
 ...
