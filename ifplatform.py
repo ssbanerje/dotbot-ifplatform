@@ -74,11 +74,24 @@ def _stdlib_distro_info():
     return did, like_ids
 
 
+def _is_wsl(is_linux):
+    if not is_linux:
+        return False
+    if 'WSL_DISTRO_NAME' in os.environ or 'WSL_INTEROP' in os.environ:
+        return True
+    try:
+        release = platform.release().lower()
+    except Exception:
+        release = ''
+    return 'microsoft' in release or 'wsl' in release
+
+
 class IfPlatform(dotbot.Plugin):
     _meta_targets = (
         'any',           # Any platform
         'anylinux',      # All Linux distributions
         'anybsd',        # All BSD distributions
+        'wsl',           # Windows Subsystem for Linux
     )
     _os_targets = (
         'macos',         # macOS
@@ -144,7 +157,10 @@ class IfPlatform(dotbot.Plugin):
     def __init__(self, context):
         super(IfPlatform, self).__init__(context)
         self._targets = set(self._distros)
-        self._directives = {'if' + d for d in self._targets}
+        self._directives = (
+            {'if' + d for d in self._targets}
+            | {'ifnot' + d for d in self._targets}
+        )
         self._bsd = set(self._bsd_distros)
         self._linux = set(self._linux_distros)
         self._other_os = set(self._os_targets) | self._bsd
@@ -210,14 +226,25 @@ class IfPlatform(dotbot.Plugin):
             did not in self._other_os and sys.platform.startswith('linux')
         )
         is_bsd = any(d in self._bsd for d in all_ids)
+        is_wsl = _is_wsl(is_linux)
 
-        if (
-            directive == 'ifany'
-            or (directive == 'ifanylinux' and is_linux)
-            or (directive == 'ifanybsd' and is_bsd)
-            or any(directive == 'if' + d for d in all_ids)
-        ):
-            self._log.debug('Matched platform %s' % did)
+        if directive.startswith('ifnot'):
+            target, negate = directive[5:], True
+        else:
+            target, negate = directive[2:], False
+
+        matched = (
+            target == 'any'
+            or (target == 'anylinux' and is_linux)
+            or (target == 'anybsd' and is_bsd)
+            or (target == 'wsl' and is_wsl)
+            or (target in all_ids)
+        )
+        if negate:
+            matched = not matched
+
+        if matched:
+            self._log.debug('Matched directive %s on platform %s' % (directive, did))
             return self._run_internal(data)
         return True
 
