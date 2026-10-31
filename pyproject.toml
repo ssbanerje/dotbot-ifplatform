@@ -1,0 +1,2 @@
+[tool.pyright]
+extraPaths = ["./lib/distro/src", "../dotbot/src/"]

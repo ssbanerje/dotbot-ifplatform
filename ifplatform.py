@@ -13,7 +13,9 @@ from dotbot.util import module
 
 def _inject_distro():
     root_dir = os.path.dirname(os.path.realpath(__file__))
-    sys.path.insert(0, os.path.join(root_dir, 'lib', 'distro', 'src', 'distro'))
+    distro_src = os.path.join(root_dir, 'lib', 'distro', 'src')
+    if os.path.isdir(os.path.join(distro_src, 'distro')) and distro_src not in sys.path:
+        sys.path.insert(0, distro_src)
 
 
 _inject_distro()
@@ -107,7 +109,7 @@ class IfPlatform(dotbot.Plugin):
         did = distro.id()
         if did == 'darwin' or sys.platform == 'darwin':
             did = 'macos'
-        elif os.name == 'nt':
+        elif os.name == 'nt' or sys.platform == 'win32':
             did = 'windows'
 
         # Include ID_LIKE entries so derivatives (e.g. CachyOS -> arch) match

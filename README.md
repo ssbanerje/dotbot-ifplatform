@@ -41,6 +41,7 @@ The plugin queries the local platform string using the `distro` plugin. Acceptab
 | anylinux     | Any Linux in table                         |
 | anybsd       | Any BSD in table                           |
 | macos        | MacOS                                      |
+| windows      | Windows                                    |
 | ubuntu       | Ubuntu                                     |
 | debian       | Debian                                     |
 | rhel         | RedHat Enterprise Linux                    |
